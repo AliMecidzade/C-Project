@@ -20,5 +20,6 @@ namespace FinalProject
         public static MainForm MainForm { get;  set; }
         public static UserPageForm UserPage { get;  set; }
         public static AdminForm AdminForm { get;  set; }
+        public static string Code { get; internal set; }
     }
 }

@@ -8,52 +8,47 @@ namespace FinalProject
 {
     class Validator
     {
-        public bool IsEmpty(params string[] txbxs)
+        public void IsEmpty(params string[] txbxs)
         {
             bool isEmpty = false;
             foreach (string txbx in txbxs)
             {
                 if (string.IsNullOrEmpty(txbx))
                 {
-                    isEmpty = true;
-                    break;
+                    throw new ArgumentNullException("Please fill out all fields");
                 }
             }
-            return isEmpty;
+            
         }
-        public bool isValidEmail(string email)
+        public void isValidEmail(string email)
         {
-            if (email.Contains("@"))
-            {
-                return true;
-
-            }
-            else return false;
+            if (!string.IsNullOrEmpty(email))
+                throw new ArgumentNullException();
+            if (!email.Contains("@"))
+                throw new InvalidEmailException("Your email is worng");
         }
-        public bool isValidPassword(string password)
+        public void isValidPassword(string password)
         {
-            if (password.Length >= 4)
-            {
-                return true;
-
-            }
-            else return false;
+            if (!string.IsNullOrEmpty(password))
+                throw new ArgumentNullException();
+            if (password.Length < 4)
+                throw new InvalidPasswordException("Your passsword is wrong");
         }
-        public bool isValidAgeValue(string age)
+        public void isValidAgeValue(string age)
         {
-            bool validAge = false;
             if (!string.IsNullOrEmpty(age))
-            {
-                if (byte.TryParse(age, out byte result))
-                {
-                    if (result > 0 && result <= 100)
-                        validAge = true;
-                }
+                throw new ArgumentNullException();
+            else if (byte.TryParse(age, out byte result))
+                throw new FormatException("The format of the given value is not correct");
+            else if (result > 0 && result <= 100)
+                throw new InvalidAgeValueException("The given Age value is invalid");
+                      
+                
                    
                
                 
-            }
-            return validAge;
+            
+       
         }
 
 

@@ -1,8 +1,10 @@
 ﻿using FinalProject.Forms;
 using FinalProject.Roles;
 using System;
-
+using System.Net.Mail;
+using System.Net;
 using System.Windows.Forms;
+using FinalProject.Managers;
 
 namespace FinalProject
 {
@@ -10,12 +12,13 @@ namespace FinalProject
     {
         private readonly Validator validator;
         private readonly UsersData usersData;
-
+        private readonly CodeConfirmationForm codeConfirmation;
         public MainForm()
         {
             InitializeComponent();
             validator = new Validator();
             usersData = new UsersData();
+            codeConfirmation = new CodeConfirmationForm();
             Session.Data = usersData;
         }
 
@@ -36,37 +39,20 @@ namespace FinalProject
 
         private void btn_register_Click_2(object sender, EventArgs e)
         {
-            string
-            name = txbx_Name.Text,
-            surname = txbx_Surname.Text,
-            password = txbx_regPassword.Text,
-            email = txbx_regEmail.Text,
-            age = txbx_age.Text;
-
-            bool validInput = true;
-            if (validator.IsEmpty(name, surname, email, password, age))
+            try
             {
-                validInput = false;
-                MessageBox.Show("Please fill out all fields");
-            }
-            else
-            {
+                string
+           name = txbx_Name.Text,
+           surname = txbx_Surname.Text,
+           password = txbx_regPassword.Text,
+           email = txbx_regEmail.Text,
+           age = txbx_age.Text;
 
+                validator.IsEmpty(name, surname, email, password);
+                validator.isValidAgeValue(age);
+                validator.isValidEmail(email);
+                validator.isValidPassword(password);
 
-                if (!validator.isValidEmail(email))
-                {
-                    validInput = false;
-                    MessageBox.Show("Your email is worng");
-                }
-                if (!validator.isValidPassword(password))
-                {
-                    validInput = false;
-                    MessageBox.Show("Your passsword is wrong");
-                }
-            }
-             
-            if (validInput)
-            {
                 User user = new User(name, surname, password, email, byte.Parse(age));
                 user.UserType = UserRole.User;
                 if (usersData.UserExist(user))
@@ -75,18 +61,53 @@ namespace FinalProject
                 }
                 else
                 {
-                    usersData.Add(user);
-                    MessageBox.Show("You successfully registered!");
+                    AccountManager accountManager = new AccountManager("smtp.gmail.com", 587);
+
+                    Session.User = user;
+                    accountManager.SendMail(email, "Confirmation Code");
+                    Session.Code = accountManager.ConfirmationCode;
+                    codeConfirmation.ShowDialog();
+                    if (user.IsConfirmedEmail)
+                    {
+                        usersData.Add(user);
+                        MessageBox.Show("You successfully registered!");
+                    }
+                    else
+                    {
+                        MessageBox.Show("You did not confirm your email");
+                    }
+
                 }
             }
-            EmptyTextBoxes(txbx_age, txbx_regPassword, txbx_regEmail, txbx_Name, txbx_Surname);
-            if (!validator.isValidAgeValue(age))
+            catch (ArgumentException exp)
             {
-                validInput = false;
-                MessageBox.Show("Given age value is invalid");
+                MessageBox.Show(exp.Message);
             }
+            catch (InvalidAgeValueException exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+            catch (InvalidEmailException exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+            catch (InvalidPasswordException exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+            catch (FormatException exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+            finally
+            {
+                EmptyTextBoxes(txbx_age, txbx_regPassword, txbx_regEmail, txbx_Name, txbx_Surname);
+            }
+            
+      
 
         }
+      
 
         private void label2_Click(object sender, EventArgs e)
         {
@@ -106,55 +127,61 @@ namespace FinalProject
 
         private void btn_login_Click(object sender, EventArgs e)
         {
-            string
-                email = txbx_logEmail.Text,
-                password = txbx_logPassword.Text;
 
-            bool validInput = true;
-            if (validator.IsEmpty(email, password))
-            {
-                validInput = false;
-                MessageBox.Show("Please fill out all fields");
-            }
-            else
-            {
-                if (!validator.isValidEmail(email))
-                {
-                    validInput = false;
-                    MessageBox.Show("Your email is worng");
-                }
-                if (!validator.isValidPassword(password))
-                {
-                    validInput = false;
-                    MessageBox.Show("Your passsword is wrong");
-                }
-            }
 
-            if(validInput)
-            {
-                if (usersData.UserExist(email, password))
-                {
-                    User currentUser = usersData.FindUser(email, password);
-                    Session.User = currentUser;
-                    Session.MainForm = this;
-                    if (currentUser.UserType == UserRole.Admin)
+
+
+            try { 
+                string
+                      email = txbx_logEmail.Text,
+                      password = txbx_logPassword.Text;
+
+                validator.isValidEmail(email);
+                validator.isValidPassword(password);
+          
+                    if (usersData.UserExist(email, password))
                     {
-                        AdminForm adminForm = Session.AdminForm ?? new AdminForm();
-                        adminForm.Show();
+                        User currentUser = usersData.FindUser(email, password);
+                        Session.User = currentUser;
+                        Session.MainForm = this;
+                        if (currentUser.UserType == UserRole.Admin)
+                        {
+                            AdminForm adminForm = Session.AdminForm ?? new AdminForm();
+                            adminForm.Show();
+                        }
+                        else if (currentUser.UserType == UserRole.User)
+                        {
+                            UserPageForm userPageForm = Session.UserPage ?? new UserPageForm();
+                            userPageForm.ShowDialog();
+                        }
+                        Hide();
                     }
-                    else if(currentUser.UserType == UserRole.User)
+                    else
                     {
-                        UserPageForm userPageForm = Session.UserPage ?? new UserPageForm();
-                        userPageForm.ShowDialog();
+                        MessageBox.Show("User does not exist");
                     }
-                    Hide();
-                }
-                else
-                {
-                    MessageBox.Show("User does not exist");
-                }
             }
-            EmptyTextBoxes(txbx_logEmail, txbx_logPassword);
+            catch (FormatException exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+            catch (ArgumentException exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+            catch (InvalidEmailException exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+            catch (InvalidPasswordException exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+            finally
+            {
+                EmptyTextBoxes(txbx_logEmail, txbx_logPassword);
+            }
+         
         }
 
         private void EmptyTextBoxes(params TextBox[] textboxes)

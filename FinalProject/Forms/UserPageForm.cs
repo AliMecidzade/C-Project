@@ -34,14 +34,14 @@ namespace FinalProject
             lbl_name.Text += _currentUser.Name;
             lbl_surname.Text += _currentUser.Surname;
             lbl_age.Text += _currentUser.Age.ToString();
-            if (string.IsNullOrEmpty(_currentUser.PropicPath))
+            if (string.IsNullOrEmpty(_currentUser.ProPicPath))
             {
                 string propic_path = _fileManager.GetPath("img", "ProfileImg.png");
                 _fileManager.ShowMyImage(propic_path, 300, 300, pic_bx);
             }
             else
             {
-                _fileManager.ShowMyImage(_currentUser.PropicPath, 300, 300, pic_bx);
+                _fileManager.ShowMyImage(_currentUser.ProPicPath, 300, 300, pic_bx);
             }
             string path = _fileManager.GetPath("logs", "logs.txt");
             _fileManager.WriteLog(_currentUser.Email, LogStatus.LogIn, _logsPath);
@@ -72,7 +72,6 @@ namespace FinalProject
             Session.MainForm.Show();
             Hide();
 
-
             _fileManager.WriteLog(_currentUser.Email, LogStatus.LogOut, _logsPath);
         }
 
@@ -98,9 +97,9 @@ namespace FinalProject
                 string path = fileDialog.FileName;
                 if (File.Exists(path))
                 {
-
+                  string proPicPath = _fileManager.CopyFile("img", path); 
                     _fileManager.ShowMyImage(path, 300, 300, pic_bx);
-                    _currentUser.PropicPath = path;
+                    _currentUser.ProPicPath = proPicPath;
                 }
 
             }

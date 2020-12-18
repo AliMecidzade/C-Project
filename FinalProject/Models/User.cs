@@ -1,9 +1,5 @@
 ﻿using FinalProject.Roles;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FinalProject
 {
@@ -23,14 +19,18 @@ namespace FinalProject
             }
             set
             {
-                if (value > 0 && value < 100)
+                if (value == default)
+                    throw new ArgumentNullException("There is no given age value");
+                else if (value > 0 || value < 100)
+                    throw new InvalidAgeValueException("The given age value is not valid");
+                else 
                     _age = value;
-                else
-                    _age = 0;
+                          
+              
             }
         }
-        public string PropicPath { get; set; }
-
+        public string ProPicPath { get; set; }
+        public bool IsConfirmedEmail { get; set; }
         public User(string name,string surname,string password, string email,byte age)
         {
             Name = name;
